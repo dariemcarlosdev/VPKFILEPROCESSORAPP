@@ -17,15 +17,24 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Services
 
         private readonly IConfiguration _configuration;
         private readonly ILogger<AzureBlobStorageService> _logger;
-        private readonly string _blobContainerName;
+        private readonly string _blobContainerName;//Container name to store files in Azure Blob Storage, set to read-only to prevent modification after initialization.
         private readonly BlobServiceClient _blobServiceClient;
 
         public AzureBlobStorageService(BlobServiceClient blobServiceClient, IConfiguration configuration, ILogger<AzureBlobStorageService> logger)
         {
             _configuration = configuration;
-            _blobContainerName = _configuration["AzureStorageAccountSetting:ContainerName"];
+            
+            _blobContainerName = _configuration["AzureStorageAccountSetting:ContainerName"] ?? "default-container"; //Set default container name if not provide to avoid the null reference assignment warning, this can be changed to throw an exception if container name is not provided.
             _blobServiceClient = blobServiceClient;
             _logger = logger;
+
+            //throw an exception if container name and conections string are not provided
+            if (string.IsNullOrEmpty(_blobContainerName) || string.IsNullOrEmpty(_configuration["AzureStorageAccountSetting:AZStorageConnectionString"]))
+            {
+                _logger.LogError("Container name and connection string are required.");
+                throw new Exception("Container name and connection string are required.");
+            }
+
         }
 
         /// <summary>
@@ -56,6 +65,7 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Services
 
                 return false; //Return false if file does not exist
             }
+            //Service-specific exceptions should be caught and logged, and a custom exception should be thrown to the calling code.
             catch (RequestFailedException ex)
             {
                 _logger.LogError(ex, "Error deleting file from Azure Blob Storage. Status: {Status}, ErrorCode: {ErrorCode}", ex.Status, ex.ErrorCode);
@@ -96,6 +106,7 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Services
 
                 return Stream.Null; //Return empty stream if file does not exist
             }
+            //Service-specific exceptions should be caught and logged, and a custom exception should be thrown to the calling code.
             catch (RequestFailedException ex)
             {
                 _logger.LogError(ex, "Error downloading file from Azure Blob Storage. Status: {Status}, ErrorCode: {ErrorCode}", ex.Status, ex.ErrorCode);
@@ -128,11 +139,6 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Services
                 _logger.LogError(ex, "Error checking if file exists in Azure Blob Storage. Status: {Status}, ErrorCode: {ErrorCode}", ex.Status, ex.ErrorCode);
                 throw;
             }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, ex.Message);
-                throw;
-            }   
         }
 
         /// <summary>
@@ -143,50 +149,23 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Services
         /// <returns></returns>
         public async Task UploadFileAsync( string fileName, Stream fileStream)
         {
-
+            
+            var containerClient = _blobServiceClient.GetBlobContainerClient(_blobContainerName); //create a new container client.This method is preferred over creating a new BlobContainerClient object each time a method is called.
             try
             {
-                //Create container if not exists
-                //var containerClient = new BlobContainerClient(_blobStorageConnection, _blobContainerName); //Create container client
-                var containerClient = _blobServiceClient.GetBlobContainerClient(_blobContainerName); //create a new container client.This method is preferred over creating a new BlobContainerClient object each time a method is called.
-                var createContainerResponse = await containerClient.CreateIfNotExistsAsync(); //Create container if not exists
-                
-                //Check if container is created
-                if (createContainerResponse != null && createContainerResponse.GetRawResponse().Status == 201)
+                var createResponse = await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
+                if (createResponse == null || createResponse.GetRawResponse().Status != 201)
                 {
-                    await containerClient.SetAccessPolicyAsync(PublicAccessType.Blob); //Set container access level to public, if I want to make it private, I can set it to Private otherwise I can remove this line
-
-                    var blob = containerClient.GetBlobClient(fileName);
-                    var a = await blob.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots, cancellationToken: default);
-                    if(a.Value)
-                    {
-                        _logger.LogInformation("File exist and deleted from Azure Blob Storage successfully.");
-    
-                    }
-                    else
-                    {
-                        _logger.LogInformation("File does not exist in Azure Blob Storage.");
-                    }
-                    await blob.UploadAsync(fileStream, overwrite: true);
-                    _logger.LogInformation("File uploaded to Azure Blob Storage successfully.");
-                }
-
-                else
-                {
-                    //if create container is not successful
                     throw new Exception("Failed to create container");
-
                 }
 
+                var blobClient = containerClient.GetBlobClient(fileName);
+                await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots);
+                await blobClient.UploadAsync(fileStream, true);
             }
             catch (RequestFailedException ex)
             {
                 _logger.LogError(ex, "Error uploading file to Azure Blob Storage. Status: {Status}, ErrorCode: {ErrorCode}", ex.Status, ex.ErrorCode);
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger?.LogError(ex, ex.Message);
                 throw;
             }
 
