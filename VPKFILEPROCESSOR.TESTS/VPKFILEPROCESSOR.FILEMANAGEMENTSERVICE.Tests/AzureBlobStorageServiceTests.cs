@@ -30,7 +30,7 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Tests
 
 
 
-            _mockBlobServiceClient = new Mock<BlobServiceClient>(_mockConfiguration.Object["AzureStorageAccountSetting:AZStorageConnectionString"]);
+            _mockBlobServiceClient = new Mock<BlobServiceClient>(_mockConfiguration.Object["AzureStorageAccountSetting:AZStorageConnectionString"] ?? "default-name");
             _mockBlobContainerClient = new Mock<BlobContainerClient>();
             _mockBlobClient = new Mock<BlobClient>();
             _mockLogger = new Mock<ILogger<AzureBlobStorageService>>();

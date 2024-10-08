@@ -1,8 +1,8 @@
 using Azure.Storage.Blobs;
 using VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Services;
-using Azure.Identity;
+using VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Utils;
 using Microsoft.Extensions.Azure;
-using Microsoft.Extensions.Configuration;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,8 +33,10 @@ builder.Services.AddSingleton(x => new BlobServiceClient(builder.Configuration["
 builder.Services.AddScoped<IDataStorageService, AzureBlobStorageService>();
 
 
+
 builder.Services.AddAzureClients(clientBuilder =>
 {
+    // Add BlobServiceClient and QueueServiceClient extensions to the AzureClientFactoryBuilder.They are used to add BlobServiceClient and QueueServiceClient to the AzureClientFactoryBuilder.
     clientBuilder.AddBlobServiceClient(builder.Configuration["AzureStorageAccountSetting:AZStorageConnectionString"]!, preferMsi: true);
     clientBuilder.AddQueueServiceClient(builder.Configuration["ConnectionString:queue"]!, preferMsi: true);
 });
