@@ -6,6 +6,12 @@ using Microsoft.Extensions.Azure;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//Configure project to use Secrets.json: In Program.cs, make sure to configure the application to read from Secrets.json. This is usually done by adding AddUserSecrets in the CreateBuilder method.
+//Adding user secrets to the configuration builder,It ensures that the application can read sensitive information stored in Secrets.json.. User secrets are used to store sensitive information like connection strings, API keys, and passwords outside of the codebase.
+
+builder.Configuration.AddUserSecrets <Program>();
+
+
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -24,7 +30,7 @@ builder.Services.AddSwaggerGen();
 //2. Scalability: By registering BlobServiceClient as a Singleton service, you can easily scale your application by sharing the same instance of BlobServiceClient across multiple requests. This allows you to distribute the load across multiple instances of BlobServiceClient, improving performance and scalability.
 //3. Lifetime Management: By registering BlobServiceClient as a Singleton service, you can control the lifetime of BlobServiceClient. This ensures that only one instance of BlobServiceClient is created and shared across all requests, reducing the risk of inconsistencies.
 
-//register BlobServiceClient
+//register BlobServiceClient.Register the BlobServiceClient using the connection string from Secrets.json
 builder.Services.AddSingleton(x => new BlobServiceClient(builder.Configuration["AzureStorageAccountSetting:AZStorageConnectionString"]));
 
 
