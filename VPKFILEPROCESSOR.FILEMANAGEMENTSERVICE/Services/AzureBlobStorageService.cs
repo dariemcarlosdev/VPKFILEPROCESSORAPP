@@ -4,6 +4,7 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel;
+using VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Utils;
 
 namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Services
 {
@@ -165,6 +166,9 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Services
                         throw new Exception("Failed to create container");
                     }
                 }
+                
+                fileName = FileUtilities.FileTransformation(fileName);
+
 
                 var blobClient = containerClient.GetBlobClient(fileName);
                 await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots);
@@ -179,5 +183,6 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Services
             }
 
         }
+
     }
 }
