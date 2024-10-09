@@ -167,7 +167,11 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Tests
                     .ReturnsAsync(Response.FromValue(true, Mock.Of<Response>())); //This sets up the DeleteIfExistsAsync method to return a Task.FromResult of Response.FromValue(true, Mock.Of<Response>()) when called.
 
                 _mockBlobClient.Setup(blob => blob.UploadAsync(It.IsAny<Stream>(), true, default))
-                    .Returns(Task.FromResult(Response.FromValue(mockBlobContentInfo.Object, Mock.Of<Response>()))); //This sets up the UploadAsync method to return a Task.FromResult of Response.FromValue(mockBlobContentInfo.Object, Mock.Of<Response>()) when called.
+                    .Returns(Task.FromResult(Response.FromValue(mockBlobContentInfo.Object, Mock.Of<Response>()))); //This sets up the UploadAsync method to return a Task.FromResult of Response.FromValue(mockBlobContentInfo.Object, Mock.Of<Response>()) when called
+                
+                //_mockBlobClient return the Uri of the uploaded file
+                _mockBlobClient.Setup(blob => blob.Uri).Returns(new Uri("https://test.blob.core.windows.net/testcontainer/test.txt"));
+
 
                 // Act
                 await _azureBlobStorageService.UploadFileAsync(fileName, fileStream);
@@ -177,12 +181,48 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Tests
                 _mockBlobContainerClient.Verify(container => container.CreateIfNotExistsAsync(PublicAccessType.None, null, null, default), Times.Once); //This take mockBlobContainerClient and verify that CreateIfNotExistsAsync was called once with the correct parameters.
                 _mockBlobContainerClient.Verify(container => container.GetBlobClient(fileName), Times.Once); //This verifies that GetBlobClient was called once with the correct parameters.
                 _mockBlobClient.Verify(blob => blob.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots, null, default), Times.Once);//This verifies that DeleteIfExistsAsync was called once with the correct parameters.
-
-
-
-
             }
+        }
 
+        [Fact]
+        //UploadFileAsync_ShouldUploadFileSuccessfully_ReturnsFileUrl
+        public async Task UploadFileAsync_ShouldUploadFileSuccessfully_ReturnsFileUrl()
+        {
+            // Arrange
+            var fileName = "test.txt";
+            var fileStream = new MemoryStream();
+            var mockBlobContainerClient = new Mock<BlobContainerClient>();
+            var mockBlobClient = new Mock<BlobClient>();
+            var mockBlobContainerInfo = new Mock<BlobContainerInfo>();
+            var mockBlobContentInfo = new Mock<BlobContentInfo>();
+            var mockResponse = new Mock<Response>();
+
+            _mockBlobServiceClient.Setup(client => client.GetBlobContainerClient(It.IsAny<string>()))
+                .Returns(_mockBlobContainerClient.Object);
+
+            _mockBlobContainerClient.Setup(container => container.CreateIfNotExistsAsync(It.IsAny<PublicAccessType>(), null, null, default))
+                .ReturnsAsync(Response.FromValue(mockBlobContainerInfo.Object, mockResponse.Object));
+
+            mockResponse.Setup(response => response.Status).Returns(201);
+
+            _mockBlobContainerClient.Setup(container => container.GetBlobClient(It.IsAny<string>()))
+                .Returns(_mockBlobClient.Object);
+
+            _mockBlobClient.Setup(blob => blob.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots, null, default))
+                .ReturnsAsync(Response.FromValue(true, Mock.Of<Response>()));
+
+            _mockBlobClient.Setup(blob => blob.UploadAsync(It.IsAny<Stream>(), true, default))
+                .Returns(Task.FromResult(Response.FromValue(mockBlobContentInfo.Object, Mock.Of<Response>())));
+
+            //_mockBlobClient return the Uri of the uploaded file
+            _mockBlobClient.Setup(blob => blob.Uri).Returns(new Uri("https://test.blob.core.windows.net/testcontainer/test.txt"));
+
+            // Act
+            var result = await _azureBlobStorageService.UploadFileAsync(fileName, fileStream);
+
+            // Assert result
+            Assert.NotNull(result);
+            Assert.Equal("https://test.blob.core.windows.net/testcontainer/test.txt", result);
         }
 
 

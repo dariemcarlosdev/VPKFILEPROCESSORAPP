@@ -5,7 +5,7 @@
     {
         Task<bool> DeleteFileAsync(string fileName);
         Task<Stream> DownloadFileAsync(string fileName);
-        Task UploadFileAsync(string fileName, Stream fileStream);
+        Task<string> UploadFileAsync(string fileName, Stream fileStream);
         Task<bool> FileExistAsync(string fileName);
     }
 }

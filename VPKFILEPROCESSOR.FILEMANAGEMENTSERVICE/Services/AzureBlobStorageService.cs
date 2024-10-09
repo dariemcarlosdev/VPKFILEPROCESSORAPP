@@ -28,6 +28,8 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Services
             _blobServiceClient = blobServiceClient;
             _logger = logger;
 
+            _logger.LogError($"Container name:{_configuration["AzureStorageAccountSetting:ContainerName"]}  and connection string: {_configuration["AzureStorageAccountSetting:AZStorageConnectionString"]}.");
+
             //throw an exception if container name and conections string are not provided
             if (string.IsNullOrEmpty(_blobContainerName) || string.IsNullOrEmpty(_configuration["AzureStorageAccountSetting:AZStorageConnectionString"]))
             {
@@ -147,21 +149,28 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Services
         /// <param name="fileName"></param>
         /// <param name="fileStream"></param>
         /// <returns></returns>
-        public async Task UploadFileAsync( string fileName, Stream fileStream)
+        public async Task<string> UploadFileAsync( string fileName, Stream fileStream)
         {
             
             var containerClient = _blobServiceClient.GetBlobContainerClient(_blobContainerName); //create a new container client.This method is preferred over creating a new BlobContainerClient object each time a method is called.
             try
-            {
-                var createResponse = await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
-                if (createResponse == null || createResponse.GetRawResponse().Status != 201)
+            {   // Check if the container exists
+                var existsResponse = await containerClient.ExistsAsync();
+                if (!existsResponse.Value)
                 {
-                    throw new Exception("Failed to create container");
+                    // Create the container if it does not exist
+                    var createResponse = await containerClient.CreateIfNotExistsAsync(PublicAccessType.None);
+                    if (createResponse == null || createResponse.GetRawResponse().Status != 201)
+                    {
+                        throw new Exception("Failed to create container");
+                    }
                 }
 
                 var blobClient = containerClient.GetBlobClient(fileName);
                 await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots);
                 await blobClient.UploadAsync(fileStream, true);
+
+                return blobClient.Uri.AbsoluteUri;
             }
             catch (RequestFailedException ex)
             {
