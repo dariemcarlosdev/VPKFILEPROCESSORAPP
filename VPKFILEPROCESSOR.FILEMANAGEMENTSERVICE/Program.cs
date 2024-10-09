@@ -2,6 +2,8 @@ using Azure.Storage.Blobs;
 using VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Services;
 using VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Utils;
 using Microsoft.Extensions.Azure;
+using Azure;
+using Azure.Messaging.EventGrid;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,15 +32,23 @@ builder.Services.AddSwaggerGen();
 //2. Scalability: By registering BlobServiceClient as a Singleton service, you can easily scale your application by sharing the same instance of BlobServiceClient across multiple requests. This allows you to distribute the load across multiple instances of BlobServiceClient, improving performance and scalability.
 //3. Lifetime Management: By registering BlobServiceClient as a Singleton service, you can control the lifetime of BlobServiceClient. This ensures that only one instance of BlobServiceClient is created and shared across all requests, reducing the risk of inconsistencies.
 
-//register BlobServiceClient.Register the BlobServiceClient using the connection string from Secrets.json
+//register BlobServiceClient.Register the BlobServiceClient using the connection string storage in Secrets.json
 builder.Services.AddSingleton(x => new BlobServiceClient(builder.Configuration["AzureStorageAccountSetting:AZStorageConnectionString"]));
 
-
+//Register EventGridPublisherClient as a Singleton service to ensure that a single instance of EventGridPublisherClient is created and shared across all requests, preventing data corruption and concurrency issues. Configurations are read from Secrets.json
+builder.Services.AddSingleton(x => new EventGridPublisherClient(new Uri(builder.Configuration["EventGridSetting:TopicEndpoint"]), new AzureKeyCredential(builder.Configuration["EventGridSetting:TopicKey"])));
 
 // Register AzureBlobStorageService as a scoped service to ensure that a new instance of AzureBlobStorageService is created for each request. This ensures that each request has its own instance of AzureBlobStorageService, preventing data corruption and concurrency issues.
 builder.Services.AddScoped<IDataStorageService, AzureBlobStorageService>();
 
 
+//This is not strictly necessary since I have already added the AzureBlobStorageService as a scoped service in the DI container. However, it is a good practice to register the IDataStorageService interface in the DI container to ensure that the DI container can resolve the IDataStorageService interface when it is injected into other services.
+//However, using AddAzureClients provides some additional benefits:
+//centralized configuration: AddAzureClients allows you to centralize the configuration of your Azure clients in one place, making it easier to manage and update the configuration.
+//manage identity support: AddAzureClients provides built-in support for managing identity, including Managed Identity and user-assigned Managed Identity. The preferMsi parameter allows you to use Managed Service Identity (MSI) for authentication, which is more secure than using connection strings.
+//Automatic Client Registration: AddAzureClients automatically registers the Azure clients in the DI container, making it easier to inject them into your services. This eliminates the need to manually register the Azure clients in the DI container, reducing the risk of errors and inconsistencies.
+
+//if there additional features are not needed, you can use AddAzureClients to register the BlobServiceClient and QueueServiceClient extensions to the AzureClientFactoryBuilder. They are used to add BlobServiceClient and QueueServiceClient to the AzureClientFactoryBuilder.
 
 builder.Services.AddAzureClients(clientBuilder =>
 {
@@ -46,6 +56,8 @@ builder.Services.AddAzureClients(clientBuilder =>
     clientBuilder.AddBlobServiceClient(builder.Configuration["AzureStorageAccountSetting:AZStorageConnectionString"]!, preferMsi: true);
     clientBuilder.AddQueueServiceClient(builder.Configuration["ConnectionString:queue"]!, preferMsi: true);
 });
+
+
 
 var app = builder.Build();
 
