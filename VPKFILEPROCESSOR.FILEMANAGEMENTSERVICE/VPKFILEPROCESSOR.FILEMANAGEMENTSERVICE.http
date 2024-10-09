@@ -1,6 +1,14 @@
 @VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE_HostAddress = http://localhost:5090
 
-GET {{VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE_HostAddress}}/weatherforecast/
-Accept: application/json
+// HTTP request file used for testing and interacting with HTTP endpoints directly from within an IDE, such as Visual Studio. This type of file is often used to define and execute HTTP requests without needing to write a full client application or use external tools like Postman.
+
+
+// FileManagementService API Endpoints for File Upload
+POST {{VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE_HostAddress}}/api/files/upload
+Content-Type:multipart/form-data
+
+{
+  "fileName": "@213635e1-4dea-52c9-89a7-03a8a5753c99.csv"
+}
 
 ###
