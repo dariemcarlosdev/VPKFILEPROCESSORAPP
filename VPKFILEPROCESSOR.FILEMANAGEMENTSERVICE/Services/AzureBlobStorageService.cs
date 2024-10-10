@@ -29,7 +29,7 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Services
             _blobServiceClient = blobServiceClient;
             _logger = logger;
 
-            _logger.LogError($"Container name:{_configuration["AzureStorageAccountSetting:ContainerName"]}  and connection string: {_configuration["AzureStorageAccountSetting:AZStorageConnectionString"]}.");
+            _logger.LogInformation($"Container name:{_configuration["AzureStorageAccountSetting:ContainerName"]}  and connection string: {_configuration["AzureStorageAccountSetting:AZStorageConnectionString"]}.");
 
             //throw an exception if container name and conections string are not provided
             if (string.IsNullOrEmpty(_blobContainerName) || string.IsNullOrEmpty(_configuration["AzureStorageAccountSetting:AZStorageConnectionString"]))

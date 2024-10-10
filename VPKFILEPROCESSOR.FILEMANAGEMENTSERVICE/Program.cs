@@ -36,7 +36,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton(x => new BlobServiceClient(builder.Configuration["AzureStorageAccountSetting:AZStorageConnectionString"]));
 
 //Register EventGridPublisherClient as a Singleton service to ensure that a single instance of EventGridPublisherClient is created and shared across all requests, preventing data corruption and concurrency issues. Configurations are read from Secrets.json
-builder.Services.AddSingleton(x => new EventGridPublisherClient(new Uri(builder.Configuration["EventGridSetting:TopicEndpoint"]), new AzureKeyCredential(builder.Configuration["EventGridSetting:TopicKey"])));
+builder.Services.AddSingleton(x => new EventGridPublisherClient(new Uri(builder.Configuration["EventGridSetting:TopicEndpoint"]!), new AzureKeyCredential(builder.Configuration["EventGridSetting:TopicKey"]!)));
 
 // Register AzureBlobStorageService as a scoped service to ensure that a new instance of AzureBlobStorageService is created for each request. This ensures that each request has its own instance of AzureBlobStorageService, preventing data corruption and concurrency issues.
 builder.Services.AddScoped<IDataStorageService, AzureBlobStorageService>();
