@@ -38,7 +38,6 @@ This project is a file processing application that allows users to upload files,
 
 - [ ] Task : Implement Azure Monitor, Application Insights, Security Center, and Cost Management for monitoring and security.
 
-- [ ] Task 11: 
 
 ## Another Improvements:
 
@@ -54,17 +53,21 @@ Architeture use in this project is a microservices architecture along with Event
 
 ## The main architecture of the project consists of the following components. Some of the components are optional and can be added based on the requirements of the project:
 
+### For Development and Testing:
+
 1. Blazor UI: A Blazor WebAssembly application that allows users to upload files and download the processed files.
 1. File Management Microservice: A microservice that handles file upload and stores the files in Azure Blob Storage.
-1. Processing Microservice: A microservice that processes the uploaded files using Azure Data Factory.
+1. Processing Microservice: A microservice that processes the uploaded files using Azure Data Factory. This microservice could be an Azure Function that triggers the SSIS package execution using ADK with Data Flow Pipeline or SSIS Integration Runtime.
 1. Notification Microservice: A microservice that sends notifications to the Blazor UI when the file processing is complete.
 1. Azure Event Grid: Used for event-driven communication between the microservices.
 1. Azure Blob Storage: Used to store the uploaded files.
 1. Azure Data Factory: Used to process the uploaded files. It will be triggered by the Processing Microservice by the mean of Azure Functions.
 1. Azure SignalR Service: Used to send real-time notifications to the Blazor UI.
-1. Azure Key Vault: Used to store connection strings and secrets securely.
 1. Azure Functions: Used to trigger the processing of files and send notifications. The azure functions are triggered by events from the Event Grid and Blob Storage. It will also execute the SSIS package using Azure Data Factory.
 1. Docker: Used for containerization of the microservices.
+
+### For Deployment, Security and Monitoring:
+ 
 1. GitHub Actions: Used for CI/CD pipeline.
 1. Azure DevOps: Used for CI/CD pipeline.
 1. Azure Monitor: Used for monitoring the application.
@@ -74,6 +77,8 @@ Architeture use in this project is a microservices architecture along with Event
 1. Azure Cost Management: Used for cost monitoring.
 1. Azure Resource Manager: Used for resource management.
 1. Azure DevTest Labs: Used for testing and development.
+1. Azure Key Vault: Used to store connection strings and secrets securely
+1. Azure Managed Identity 
 
 ## 1. Microservices Architecture:
 
@@ -83,23 +88,23 @@ Even for a small project, breaking down the system into microservices can offer 
 
 ### Benefits of Microservices Architecture:
 
-    1. Scalability: Microservices can be scaled independently based on demand.
-    1. Flexibility: Microservices can be developed, deployed, and scaled independently.
-    1. Resilience: Failure in one microservice does not affect the entire application.
-    1. Maintainability: Easier to maintain and update individual microservices.
-    1. Technology Diversity: Each microservice can use different technologies based on requirements.
-    1. Faster Time to Market: Smaller teams can work on individual microservices, leading to faster development cycles.
-    1. Reusability: Microservices can be reused across multiple applications.
-    1. Cost-Effective: Microservices can be deployed on different servers based on resource requirements.
-    1. Fault Isolation: Failure in one microservice does not affect other microservices.
-    1. Improved Security: Microservices can be secured independently.
-    1. Better Performance: Microservices can be optimized for performance based on requirements.
+1. Scalability: Microservices can be scaled independently based on demand.
+2. Flexibility: Microservices can be developed, deployed, and scaled independently.
+3. Resilience: Failure in one microservice does not affect the entire application.
+4. Maintainability: Easier to maintain and update individual microservices.
+5. Technology Diversity: Each microservice can use different technologies based on requirements.
+6. Faster Time to Market: Smaller teams can work on individual microservices, leading to faster development cycles.
+7. Reusability: Microservices can be reused across multiple applications.
+8. Cost-Effective: Microservices can be deployed on different servers based on resource requirements.
+9. Fault Isolation: Failure in one microservice does not affect other microservices.
+10. Improved Security: Microservices can be secured independently.
+11. Better Performance: Microservices can be optimized for performance based on requirements.
 
 ### How Microservices Fit in This Project.
 
-Service for File Management: Handle file uploads and interactions with Azure Blob Storage. This microservice is responsible for storing the file in Blob Storage and triggering events.
-Service for Processing: Handles the interaction with Azure Data Factory and SSIS. This microservice runs the SSIS package, processes the CSV file, and stores the processed file in Blob Storage.
-Service for Notifications: Manages the notification system (such as sending emails or in-app notifications) that lets the user know when the process is complete.
+. Service for File Management: Handle file uploads and interactions with Azure Blob Storage. This microservice is responsible for storing the file in Blob Storage and triggering events.
+. Service for Processing: Handles the interaction with Azure Data Factory and SSIS. This microservice runs the SSIS package, processes the CSV file, and stores the processed file in Blob Storage.
+. Service for Notifications: Manages the notification system (such as sending emails or in-app notifications) that lets the user know when the process is complete.
 
 ### Communication Between Services.
 
@@ -109,15 +114,21 @@ Service for Notifications: Manages the notification system (such as sending emai
 
 ### Some of the Azure services that can be used for implementing microservices in this project include:
 
-    Azure Kubernetes Service (AKS): If you're looking for container orchestration, you can use Docker and AKS to deploy and manage microservices.
-    Azure Functions: Serverless compute can be used to implement microservices that are lightweight and event-driven.
-    Azure API Management: Acts as an API Gateway to expose and manage your microservices.
-    Azure Event Grid: Used for event-driven communication between microservices.
-    Azure Service Bus: Another option for messaging and event-driven communication between microservices.
-    Azure Logic Apps: Can be used for workflow automation and integrating microservices with other
+  Azure Kubernetes Service (AKS): If you're looking for container orchestration, you can use Docker and AKS to deploy and manage microservices.
+  Azure Functions: Serverless compute can be used to implement microservices that are lightweight and event-driven.
+  Azure API Management: Acts as an API Gateway to expose and manage your microservices.
+  Azure Event Grid: Used for event-driven communication between microservices.
+  Azure Service Bus: As an alternative, another option for messaging and event-driven communication between microservices.
+  Azure Blob Storage: Used for storing files uploaded by users.
+  Azure Data Factory: Used for processing the uploaded files.
+  Azure SignalR Service: Used for real-time notifications to the Blazor UI.
+  Azure Key Vault: Used for storing connection strings and secrets securely.
+  Azure Active Directory: Used for managing identity and access control for the application.
+  Azure Managed Identity: Used for authenticating with Azure services securely without storing credentials in code.
+  Azure CI/CD Pipelines: Used for automating the build and deployment of the microservices and Blazor UI.
 
 
-Example Architecture (Microservices):
+### How to Implement Microservices in this Project:
 
 Microservice 1 (File Management) --> Blob Storage
     |
@@ -129,73 +140,70 @@ Microservice 3 (Notification)    --> Sends notification or event to Blazor UI
 
 ## 2. Event-Driven Architecture:
 
-Event-Driven Architecture (EDA) is a software architecture pattern that promotes the production, detection, consumption of, and reaction to events. Events are generated by producers and consumed by consumers.
-
-Producers and consumers are decoupled, allowing them to evolve independently. Events are typically published to an event bus or message broker, which acts as a mediator between producers and consumers.
-
-An event-driven approach can be quite effective for this type of workflow where the system reacts to a series of asynchronous operations (file upload, SSIS package execution, file processing, etc.). It allows for better scalability, flexibility, and resilience compared to a synchronous request-response model.
+. Event-Driven Architecture (EDA) is a software architecture pattern that promotes the production, detection, consumption of, and reaction to events. Events are generated by producers and consumed by consumers.
+. Producers and consumers are decoupled, allowing them to evolve independently. Events are typically published to an event bus or message broker, which acts as a mediator between producers and consumers.
+. Consumers can subscribe to events they are interested in and react to them based on their requirements. This decoupling enables better scalability, flexibility, and resilience compared to a synchronous request-response model.An event-driven approach can be quite effective for this type of workflow where the system reacts to a series of asynchronous operations (file upload, SSIS package execution, file processing, etc.). It allows for better scalability, flexibility, and resilience compared to a synchronous request-response model.
 
 
 ### Benefits of Event-Driven Architecture:
 
-    1. Decoupling: Producers and consumers are decoupled, allowing them to evolve independently.
-    1. Scalability: Event-driven systems can be scaled horizontally by adding more consumers.
-    1. Flexibility: Consumers can react to events based on their requirements.
-    1. Resilience: Failure in one consumer does not affect the entire system.
-    1. Asynchronicity: Consumers can process events asynchronously, improving performance.
-    1. Real-Time Processing: Events can be processed in real-time, enabling real-time analytics and decision-making.
-    1. Fault Tolerance: Event-driven systems are fault-tolerant, as events can be replayed in case of failure.
-    1. Event Sourcing: Events can be stored and replayed for auditing and compliance purposes.
-    1. Loose Coupling: Producers and consumers are loosely coupled, enabling better maintainability and scalability.
-    1. Event-Driven Integration: Events can be used for integrating different systems and applications.
-    1. Event-Driven Microservices: Event-driven architecture complements microservices architecture by enabling communication between microservices.
+1. Decoupling: Producers and consumers are decoupled, allowing them to evolve independently.
+1. Scalability: Event-driven systems can be scaled horizontally by adding more consumers.
+1. Flexibility: Consumers can react to events based on their requirements.
+1. Resilience: Failure in one consumer does not affect the entire system.
+1. Asynchronicity: Consumers can process events asynchronously, improving performance.
+1. Real-Time Processing: Events can be processed in real-time, enabling real-time analytics and decision-making.
+1. Fault Tolerance: Event-driven systems are fault-tolerant, as events can be replayed in case of failure.
+1. Event Sourcing: Events can be stored and replayed for auditing and compliance purposes.
+1. Loose Coupling: Producers and consumers are loosely coupled, enabling better maintainability and scalability.
+1. Event-Driven Integration: Events can be used for integrating different systems and applications.
+1. Event-Driven Microservices: Event-driven architecture complements microservices architecture by enabling communication between microservices.
 
 ### Event-Driven Communication (Azure Event Grid).
 
-    . All services are event-driven, using Azure Event Grid to communicate between microservices.
-    . Events are published by FileManagementService after a file is uploaded and by ProcessingService after SSIS execution completes.
-    . Azure Functions (optional) can listen for these events and trigger actions, such as notifying the user or initiating processing.
-    . SSISPackageTrigger: An Azure Function that subscribes to Azure Event Grid events triggered by the File Management Microservice when a file is uploaded. It starts the processing by calling the Processing Microservice.
-    . FileProcessingComplete: Another Azure Function that listens for completion events triggered by the Processing Microservice and notifies the Blazor UI that the file is ready for download.
+. All services are event-driven, using Azure Event Grid to communicate between microservices.
+. Events are published by FileManagementService after a file is uploaded and by ProcessingService after SSIS execution completes.
+. Azure Functions (optional) can listen for these events and trigger actions, such as notifying the user or initiating processing.
+. SSISPackageTrigger: An Azure Function that subscribes to Azure Event Grid events triggered by the File Management Microservice when a file is uploaded. It starts the processing by calling the Processing Microservice.
+. FileProcessingComplete: Another Azure Function that listens for completion events triggered by the Processing Microservice and notifies the Blazor UI that the file is ready for download.
 
 
 ### How to Implement EDA in this Project:
 
-    1. File Upload Event: 
+1. File Upload Event: 
 
-        . When a user uploads a .csv file, the FileManagementService publishes an event to Azure Event Grid.
-        . The event payload carries the file name and file URL which will be used by the ProcessingService for processing.
-        . The ProcessingService listens for this event and triggers the SSIS package execution using Azure Data Factory.
+. When a user uploads a .csv file, the FileManagementService publishes an event to Azure Event Grid.
+. The event payload carries the file name and file URL which will be used by the ProcessingService for processing.
+. The ProcessingService listens for this event and triggers the SSIS package execution using Azure Data Factory.
     
-    2. SSIS package Execution:
+2. SSIS package Execution:
     
-		. When the file upload event is received,  an event handler (Azure Function) triggers the execution of the SSIS package using Azure Data Factory pipeline to run the SSIS package on the uploaded file.
-		. The SSIS package processes the uploaded file and stores the processed file in Azure Blob Storage.
-		. The SSIS package execution is asynchronous and can take some time to complete.
-        . Once the SSIS package execution is complete, the ProcessingService publishes (trigger) an event to Azure Event Grid for post-processing (such as file download), indicating that the file has been processed successfully and output file is ready for download.
+. When the file upload event is received,  an event handler (Azure Function) triggers the execution of the SSIS package using Azure Data Factory pipeline to run the SSIS package on the uploaded file.
+. The SSIS package processes the uploaded file and stores the processed file in Azure Blob Storage.
+. The SSIS package execution is asynchronous and can take some time to complete.
+. Once the SSIS package execution is complete, the ProcessingService publishes (trigger) an event to Azure Event Grid for post-processing (such as file download), indicating that the file has been processed successfully and output file is ready for download.
     
-    3. File Processed Event: 
+3. File Processed Event: 
 
-		. After the SSIS package execution is complete, the ProcessingService publishes an event to Azure Event Grid indicating that the file has been processed successfully and output file is ready for download.
-		. The event payload contains the processed file URL which will be used by the Blazor UI for download.
-        . The Blazor Server can susbscribe to this event(listening) and notify the user that the file is ready for download.
-		. The NotificationService listens for this event and sends a notification to the Blazor UI using Azure SignalR Service.
+. After the SSIS package execution is complete, the ProcessingService publishes an event to Azure Event Grid indicating that the file has been processed successfully and output file is ready for download.
+. The event payload contains the processed file URL which will be used by the Blazor UI for download.
+. The Blazor Server can susbscribe to this event(listening) and notify the user that the file is ready for download.
+. The NotificationService listens for this event and sends a notification to the Blazor UI using Azure SignalR Service.
 
 ### Example Architecture (EDA):
 
 User Uploads CSV  -->  Blob Storage Upload Event  -->  Event Grid  -->  Azure Function Trigger --> SSIS Package Execution via ADF  --> Processed File Event --> Blazor UI for Download
 
 
-
 ## My Final Recommendations and Suggestions is:
 
 
-### Start with Event-Driven Architecture (EDA):
+Start with Event-Driven Architecture (EDA):
 
 Since this project involves reacting to file uploads and processing them asynchronously, an event-driven model (using Azure Event Grid or Service Bus) fits the use case well.
 It’s easier to implement for smaller systems and allows you to scale naturally as your workload increases.
 
-### Consider Microservices for Scalability:
+Consider Microservices for Scalability:
 
 If you envision expanding this system significantly or breaking the functionality into independent services, microservices would provide the necessary flexibility.
 Combine event-driven communication with microservices to maintain flexibility and decoupling.
@@ -207,22 +215,22 @@ Combine event-driven communication with microservices to maintain flexibility an
 
 ### Blazor UI (BlazorApp)
 
-    - Pages: Contains Razor components for UI, such as Upload.razor and Download.razor to handle file upload and download links.
-    - Services: Contains service classes for interacting with the backend microservices using HttpClient.
-    - Example: A FileService class that calls the FileManagementService API to upload files.
-    - I use Dependency Injection to inject services into the Blazor components.
+- Pages: Contains Razor components for UI, such as Upload.razor and Download.razor to handle file upload and download links.
+- Services: Contains service classes for interacting with the backend microservices using HttpClient.
+- Example: A FileService class that calls the FileManagementService API to upload files.
+- I use Dependency Injection to inject services into the Blazor components.
 
 
 ### Microservice 1: File Management Microservice (File Upload/Blob Storage)
 
-    - Controllers/FileController.cs: This controller exposes APIs for file upload, such as UploadFile. It stores the uploaded file into Azure Blob Storage.
-    - Services/BlobStorageService.cs: Contains logic to upload files to Azure Blob Storage and generate a file URL.
-    - Events: Once the file is uploaded, this microservice triggers an event using Azure Event Grid to notify the ProcessingService to start processing.
+- Controllers/FileController.cs: This controller exposes APIs for file upload, such as UploadFile. It stores the uploaded file into Azure Blob Storage.
+- Services/BlobStorageService.cs: Contains logic to upload files to Azure Blob Storage and generate a file URL.
+- Events: Once the file is uploaded, this microservice triggers an event using Azure Event Grid to notify the ProcessingService to start processing.
 
 #### Required Packages:
 
-    - Azure.Storage.Blobs: Contains classes for interacting with Azure Blob Storage.
-    - Azure.Messaging.EventGrid: Contains classes for interacting with Azure Event Grid.
+- Azure.Storage.Blobs: Contains classes for interacting with Azure Blob Storage.
+- Azure.Messaging.EventGrid: Contains classes for interacting with Azure Event Grid.
 
 #### Tasks TO-DO:
 
@@ -285,20 +293,20 @@ If you want to extend this further (e.g., adding another storage provider like A
 
 #### High-Level Architecture Overview:
 
-    - Microservice 2 (Processing Microservice) is triggered by the Event Grid, which starts the SSIS execution using Azure Data Factory with Azure SSIS Integration Runtime.
-    - Microservice 2 (Processing Microservice) is subcribed to the event grid published by Microservice 1(File Management Microservice when the file is uploaded, and triggers the SSIS package execution using Azure Data Factory. Once the SSIS package execution is complete, it publishes an event to the Event Grid indicating that the file has been processed successfully and is ready for download.
-    - Managed Identity authenticates the services to interact securely with Azure resources without using explicit credentials.
-    - Azure Functions handle the event-triggering logic.
+- Microservice 2 (Processing Microservice) is triggered by the Event Grid, which starts the SSIS execution using Azure Data Factory with Azure SSIS Integration Runtime.
+- Microservice 2 (Processing Microservice) is subcribed to the event grid published by Microservice 1(File Management Microservice when the file is uploaded, and triggers the SSIS package execution using Azure Data Factory. Once the SSIS package execution is complete, it publishes an event to the Event Grid indicating that the file has been processed successfully and is ready for download.
+- Managed Identity authenticates the services to interact securely with Azure resources without using explicit credentials.
+- Azure Functions handle the event-triggering logic.
     
-    . Create a Azure Function (event trigger template) project that listens for events from Azure Event Grid and triggers the processing of files using Azure Data Factory.
-       Required Packages: Microsoft.Azure.Management.DataFactory, Microsoft.Azure.Identity, Microsoft.Azure.EventGrid.
+. Create a Azure Function (event trigger template) project that listens for events from Azure Event Grid and triggers the processing of files using Azure Data Factory.
+Required Packages: Microsoft.Azure.Management.DataFactory, Microsoft.Azure.Identity, Microsoft.Azure.EventGrid.
 
 #### Required Packages:
 
-    - Microsoft.Azure.Management.DataFactory: Contains the classes for interacting with Azure Data Factory.
-    - Microsoft.Azure.Management.DataFactory.Models: Contains the models used for interacting with Azure Data Factory.
-    - Microsoft.Azure.Identity: Contains classes for authenticating with Azure services using managed identities. This is useful for secure authentication without storing credentials in code.
-    - Microsoft.Azure.EventGrid: Contains classes for interacting with Azure Event Grid.
+- Microsoft.Azure.Management.DataFactory: Contains the classes for interacting with Azure Data Factory.
+- Microsoft.Azure.Management.DataFactory.Models: Contains the models used for interacting with Azure Data Factory.
+- Microsoft.Azure.Identity: Contains classes for authenticating with Azure services using managed identities. This is useful for secure authentication without storing credentials in code.
+- Microsoft.Azure.EventGrid: Contains classes for interacting with Azure Event Grid.
 
 #### Tasks TO-DO:
 
@@ -315,9 +323,9 @@ If you want to extend this further (e.g., adding another storage provider like A
 
 #### Project Code Structure.
 
-    - Controllers/ProcessingController.cs: This controller listens for events (e.g., file upload events) and invokes Azure Data Factory to execute the SSIS package on the uploaded file.
-    - Services/DataFactoryService.cs: Contains the logic to interact with Azure Data Factory and run the SSIS package using the uploaded CSV file.
-    - Events: Once the SSIS package is finished, this microservice triggers an event via Event Grid to notify the NotificationService or Blazor UI that the processing is complete and the output file is ready.
+- Controllers/ProcessingController.cs: This controller listens for events (e.g., file upload events) and invokes Azure Data Factory to execute the SSIS package on the uploaded file.
+- Services/DataFactoryService.cs: Contains the logic to interact with Azure Data Factory and run the SSIS package using the uploaded CSV file.
+- Events: Once the SSIS package is finished, this microservice triggers an event via Event Grid to notify the NotificationService or Blazor UI that the processing is complete and the output file is ready.
 
 ProcessingService/
 ├── Controllers/                  (API for invoking SSIS)
@@ -331,12 +339,13 @@ ProcessingService/
 
 
 ### Notification Microservice
-    - Controllers/NotificationController.cs: Receives file processing completion events and sends notifications.
-    - Services/NotificationService.cs: Implements the logic to send notifications (e.g., via SignalR to Blazor UI or email to the user).
+    
+- Controllers/NotificationController.cs: Receives file processing completion events and sends notifications.
+- Services/NotificationService.cs: Implements the logic to send notifications (e.g., via SignalR to Blazor UI or email to the user).
 
 #### Required Packages:
 
-    - Microsoft.Azure.SignalR: Contains classes for interacting with Azure SignalR Service.
-    - Microsoft.AspNetCore.SignalR.Client: Contains classes for SignalR client connections.
+- Microsoft.Azure.SignalR: Contains classes for interacting with Azure SignalR Service.
+- Microsoft.AspNetCore.SignalR.Client: Contains classes for SignalR client connections.
 
 
