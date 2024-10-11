@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "VPKFILEPROCESSOR.AZUREFUNCTION": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7206"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "httpPort": 34016,
+      "useSSL": false
+    }
+  }
+}
