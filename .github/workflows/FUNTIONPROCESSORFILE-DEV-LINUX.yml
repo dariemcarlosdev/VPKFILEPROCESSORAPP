@@ -43,6 +43,10 @@ jobs:
       with:
         name: functionapp
         path: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+    - name: Login to Azure using Managed Identity 
+      uses: azure/login@v1  // Added this step to login to Azure using Managed Identity with azure/login@v1 action
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }} //the client id of the managed identity and it is stored in the GitHub secrets
     - name: Deploy to Azure Function App
       uses: Azure/functions-action@v1
       with:
