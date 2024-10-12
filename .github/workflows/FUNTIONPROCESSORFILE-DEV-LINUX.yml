@@ -43,6 +43,10 @@ jobs:
       with:
         name: functionapp
         path: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+    - name: Login to Azure using Managed Identity
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
     - name: Deploy to Azure Function App
       uses: Azure/functions-action@v1
       with:
