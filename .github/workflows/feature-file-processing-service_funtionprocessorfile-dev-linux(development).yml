@@ -1,6 +1,3 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/azure/functions-action
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy dotnet core project to Azure Function App - funtionprocessorfile-dev-linux
 
 on:
@@ -14,11 +11,8 @@ env:
   DOTNET_VERSION: '8.0.x' # set this to the dotnet version to use
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write #This is required for requesting the JWT
-
     steps:
       - name: 'Checkout GitHub Action'
         uses: actions/checkout@v4
@@ -34,7 +28,26 @@ jobs:
           pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
           dotnet build --configuration Release --output ./output
           popd
-      
+
+      - name: 'Upload Build Artifacts'
+        uses: actions/upload-artifact@v3
+        with:
+          name: functionapp
+          path: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/output'
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write # This is required for requesting the JWT
+
+    steps:
+      - name: 'Download Build Artifacts'
+        uses: actions/download-artifact@v3
+        with:
+          name: functionapp
+          path: './output'
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -48,5 +61,4 @@ jobs:
         with:
           app-name: 'funtionprocessorfile-dev-linux'
           slot-name: 'development'
-          package: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/output'
-          
+          package: './output'
