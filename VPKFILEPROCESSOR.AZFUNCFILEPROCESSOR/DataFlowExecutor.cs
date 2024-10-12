@@ -8,6 +8,9 @@ using Microsoft.Extensions.Logging;
 
 namespace VPKFILEPROCESSOR.AZFUNCFILEPROCESSOR
 {
+    /// <summary>
+    /// This class is responsible for executing the data flow based on the event received.
+    /// </summary>
     public class DataFlowExecutor
     {
         private readonly ILogger<DataFlowExecutor> _logger;
