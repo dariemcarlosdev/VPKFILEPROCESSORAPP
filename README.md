@@ -1,4 +1,4 @@
-﻿# VPKFILEPROCESSOR - File Processing Application
+# VPKFILEPROCESSOR - File Processing Application
 
 ## Project Description:
 
