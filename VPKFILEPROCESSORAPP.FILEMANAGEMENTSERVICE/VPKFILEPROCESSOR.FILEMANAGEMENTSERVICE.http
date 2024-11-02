@@ -1,6 +1,0 @@
-@VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE_HostAddress = http://localhost:5090
-
-GET {{VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

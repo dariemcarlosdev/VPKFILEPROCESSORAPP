@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "VPKFILEPROCESSOR.AZFUNCFILEPROCESSOR": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7296"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "httpPort": 31757,
+      "useSSL": false
+    }
+  }
+}
