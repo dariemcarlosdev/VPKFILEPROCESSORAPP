@@ -24,8 +24,6 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Controllers
         [HttpPost("upload")]
         public async Task<IActionResult> UploadFileAsync(IFormFile file)
         {
-            
-
             if (file == null || file.Length == 0)
             {
                 return BadRequest("File is required.");
@@ -43,23 +41,23 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Controllers
                 var fileStream = file.OpenReadStream();
 
                 // Upload file to Azure Blob Storage
-                var fileUrl = await _dataStorageService.UploadFileAsync(fileName, fileStream);
+                var uploadResponse = await _dataStorageService.UploadFileAsync(fileName, fileStream);
 
                 //check if file was uploaded successfully
-                if (!string.IsNullOrEmpty(fileUrl))
+                if (uploadResponse.IsSuccess)
                 {
                     // Publish event to Event Grid
                     var events = new List<EventGridEvent>
                     {
                         new EventGridEvent(
 
-                            subject: $"NewFileUploaded/{file.FileName}", // Event subject used to route events to specific handlers
+                            subject: $"NewFileUploaded/{file.FileName}", // Event subject used to route events to specific handlers. In this case, the event handler will be an Azure Function that processes the file.
                             dataVersion: "1.0",
                             eventType: "FileUploaded", // Event type name used to route events to specific handlers
                             data: new //data object to be sent with the event and can be used by the event handler to process the event, in this case the event handler will be a azure function that will process the file
                             {
-                                FileName  = fileName,
-                                FileUrl = fileUrl
+                                FileName  = uploadResponse.Data.BlobFileName,
+                                FileUrl = uploadResponse.Data.BlobFileUrl
                             })
                     };
 
@@ -70,13 +68,15 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Controllers
                         _logger.LogInformation("Event published successfully.");
 
                     }
-                    
-                    return Ok(new { FileUrl = fileUrl });
+
+                    //This response will be returned if the file was uploaded successfully. and it can be manipulated to return a more detailed response, such as the file URL, file name, and data
+                    return Ok(new { Response = uploadResponse.Message });
                     
                 }
                 else
                 {
-                    return StatusCode(500, "Failed to upload file.");
+                    //This response will be returned if the file was not uploaded successfully, and it can be manipulated to return a more detailed response.
+                    return StatusCode(500, new { Response = uploadResponse.Message });
                 }
 
             }
