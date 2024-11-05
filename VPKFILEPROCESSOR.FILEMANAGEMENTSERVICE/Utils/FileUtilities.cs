@@ -18,12 +18,15 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Utils
             fileName = Regex.Replace(fileName, "-{2,}", "-", RegexOptions.Compiled);
 
             //add suffix to file name before file extension
-            fileName = fileName.Insert(fileName.LastIndexOf('.'), "-input");
+           // fileName = fileName.Insert(fileName.LastIndexOf('.'), "-INPUT");
 
             //add prefix to file name with date and time
             fileName = $"{DateTime.Now:yyyyMMddHHmmss}-{fileName}";
 
+            //convert file name to lower case
+            fileName = fileName.ToLower();
 
+            //return transformed file name
             return fileName;
         }
     }
