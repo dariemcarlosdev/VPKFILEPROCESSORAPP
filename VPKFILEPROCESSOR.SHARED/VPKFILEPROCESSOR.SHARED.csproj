@@ -11,7 +11,6 @@
     <Folder Include="Cross Cutting Concerns\Global Exceptions Handler\" />
     <Folder Include="Cross Cutting Concerns\Configurations\" />
     <Folder Include="Models\" />
-    <Folder Include="Services\" />
     <Folder Include="Utils\" />
   </ItemGroup>
 

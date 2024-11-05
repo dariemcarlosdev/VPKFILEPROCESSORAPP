@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "AZFUNCFILEPROCESSINGADF": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7289"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "httpPort": 30786,
+      "useSSL": false
+    }
+  }
+}

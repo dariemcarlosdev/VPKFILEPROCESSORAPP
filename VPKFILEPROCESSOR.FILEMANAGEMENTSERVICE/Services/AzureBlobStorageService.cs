@@ -5,6 +5,7 @@ using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel;
 using VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Utils;
+using VPKFILEPROCESSOR.SHARED.Services.ResponseService;
 
 namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Services
 {
@@ -29,7 +30,7 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Services
             _blobServiceClient = blobServiceClient;
             _logger = logger;
 
-            _logger.LogError($"Container name:{_configuration["AzureStorageAccountSetting:ContainerName"]}  and connection string: {_configuration["AzureStorageAccountSetting:AZStorageConnectionString"]}.");
+            _logger.LogInformation($"Container name:{_configuration["AzureStorageAccountSetting:ContainerName"]}  and connection string: {_configuration["AzureStorageAccountSetting:AZStorageConnectionString"]}.");
 
             //throw an exception if container name and conections string are not provided
             if (string.IsNullOrEmpty(_blobContainerName) || string.IsNullOrEmpty(_configuration["AzureStorageAccountSetting:AZStorageConnectionString"]))
@@ -150,7 +151,7 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Services
         /// <param name="fileName"></param>
         /// <param name="fileStream"></param>
         /// <returns></returns>
-        public async Task<string> UploadFileAsync( string fileName, Stream fileStream)
+        public async Task<ResponseService<FileResponse>> UploadFileAsync( string fileName, Stream fileStream)
         {
             
             var containerClient = _blobServiceClient.GetBlobContainerClient(_blobContainerName); //create a new container client.This method is preferred over creating a new BlobContainerClient object each time a method is called.
@@ -174,14 +175,22 @@ namespace VPKFILEPROCESSOR.FILEMANAGEMENTSERVICE.Services
                 await blobClient.DeleteIfExistsAsync(DeleteSnapshotsOption.IncludeSnapshots);
                 await blobClient.UploadAsync(fileStream, true);
 
-                return blobClient.Uri.AbsoluteUri;
+                var fileResponse = new FileResponse
+                {
+                    BlobFileName = fileName,
+                    BlobFileUrl = blobClient.Uri.AbsoluteUri
+                };
+
+                return new ResponseService<FileResponse>(fileResponse, "File uploaded successfully.", true);
+
             }
             catch (RequestFailedException ex)
             {
                 _logger.LogError(ex, "Error uploading file to Azure Blob Storage. Status: {Status}, ErrorCode: {ErrorCode}", ex.Status, ex.ErrorCode);
-                throw;
+                return new ResponseService<FileResponse>(new FileResponse(), "Failed to upload file.", false);
             }
 
+            
         }
 
     }
