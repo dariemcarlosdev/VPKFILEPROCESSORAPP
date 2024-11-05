@@ -39,7 +39,7 @@ This project is a file processing application that allows users to upload files,
 - [ ] Task : Implement Azure Monitor, Application Insights, Security Center, and Cost Management for monitoring and security.
 
 
-## Another Improvements:
+## Future Improvements:
 
 - [ ] Improvement 1: Store connection strings and secrets in Azure Key Vault for security of the application. Service should be able to access the secrets from Azure Key Vault.
 - [ ] Improvement 2: Use Azure.Identity for authenticating with Azure services used in the project such as Azure Blob Storage, Azure Data Factory, Azure Event Grid, Azure SignalR Service, etc.
