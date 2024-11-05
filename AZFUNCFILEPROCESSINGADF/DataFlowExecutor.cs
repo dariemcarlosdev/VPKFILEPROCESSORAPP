@@ -74,7 +74,7 @@ namespace AZFUNCFILEPROCESSINGADF
                 var binaryDataPipeParameters = new Dictionary<string, BinaryData>
                 {
                     { "inputFileName", BinaryData.FromString(JsonSerializer.Serialize(fileName))}, //inputPath is the parameter name in the pipeline
-                    { "outputFileName",BinaryData.FromString(JsonSerializer.Serialize($"{fileName}-OUTPUT")) }, //outputPath is the parameter name in the pipeline
+                    { "outputFileName",BinaryData.FromString(JsonSerializer.Serialize($"OUTPUT-{fileName}")) }, //outputPath is the parameter name in the pipeline
 
                 };
 
