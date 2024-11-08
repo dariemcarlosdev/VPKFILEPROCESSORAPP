@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "AZUREFUNCNOTIFICATION": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7100"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker",
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "httpPort": 30113,
+      "useSSL": false
+    }
+  }
+}
