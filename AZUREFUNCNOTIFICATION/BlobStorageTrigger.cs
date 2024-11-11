@@ -1,25 +1,21 @@
-using System.IO;
 using System.Text;
-using System.Threading.Tasks;
-using Azure.Storage;
-using Azure.Storage.Blobs;
-using Azure.Storage.Sas;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage.Blob;
+using Azure.Storage.Blobs;
 using Newtonsoft.Json;
+using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace AZUREFUNCNOTIFICATION
 {
     public class BlobStorageTrigger
     {
         private readonly ILogger<BlobStorageTrigger> _logger;
-        private readonly IEmailService _emailService;
+        private readonly IEmailNotificationService _emailNotificationService;
         private readonly HttpClient _httpClient = new HttpClient();
 
-        public BlobStorageTrigger(ILogger<BlobStorageTrigger> logger, IEmailService emailService)
+        public BlobStorageTrigger(ILogger<BlobStorageTrigger> logger, IEmailNotificationService emailNotificationService)
         {
-            _emailService = emailService;
+            _emailNotificationService = emailNotificationService;
             _logger = logger;
         }
 
@@ -31,10 +27,11 @@ namespace AZUREFUNCNOTIFICATION
         /// <returns></returns>
         [Function(nameof(BlobStorageTrigger))]
         public async Task Run(
-            [BlobTrigger("download/{name}", Source = BlobTriggerSource.EventGrid, Connection = "AzureWebJobsStorage")]
+            [BlobTrigger("downloads/{name}", Connection = "AzureWebJobsStorage")]
             CloudBlockBlob blob,
             Stream stream,
-            string name)
+            string name,
+            FunctionContext context)
         {
             _logger.LogInformation($"New blob detected \n Name: {name} \n Size: {stream.Length} Bytes");
 
@@ -42,11 +39,19 @@ namespace AZUREFUNCNOTIFICATION
             var sasToken = GenerateSasToken(blob);
             var downloadUrl = $"{blob.Uri}?{sasToken}";
 
+    
+
+            //TODO: Add processing logic here
             // Notify Blazor Server app via HTTP POST
-            await NotifyBlazorServerAppMicroservice(downloadUrl, name, _logger);
+            //await NotifyBlazorServerAppMicroservice(downloadUrl, fileName, _logger);
 
             // Send email notification to the logged-in user
-            await SendEmailNotification(downloadUrl, name, _logger);
+
+            //using helper method
+            //await SendEmailNotification(downloadUrl, name, _logger);
+
+            //using SendGridEmailService
+            await _emailNotificationService.SendEmailNotificationAsync(downloadUrl, name); 
 
         }
 
