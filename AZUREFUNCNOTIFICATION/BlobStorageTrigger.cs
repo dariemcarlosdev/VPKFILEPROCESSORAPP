@@ -4,6 +4,9 @@ using Microsoft.Extensions.Logging;
 using Azure.Storage.Blobs;
 using Newtonsoft.Json;
 using Microsoft.WindowsAzure.Storage.Blob;
+using Azure.Storage.Sas;
+using Azure.Storage;
+using System.IO.Compression;
 
 namespace AZUREFUNCNOTIFICATION
 {
@@ -27,54 +30,91 @@ namespace AZUREFUNCNOTIFICATION
         /// <returns></returns>
         [Function(nameof(BlobStorageTrigger))]
         public async Task Run(
-            [BlobTrigger("downloads/{name}", Connection = "AzureWebJobsStorage")]
-            CloudBlockBlob blob,
-            Stream stream,
-            string name,
-            FunctionContext context)
+            [BlobTrigger("downloads/{name}", Connection = "ContainerBlobStorage")]
+            //CloudBlockBlob blob,
+            BlobClient blob,
+            string name)
         {
-            _logger.LogInformation($"New blob detected \n Name: {name} \n Size: {stream.Length} Bytes");
+            try
+            {
+                // Manually create a BlobServiceClient and BlobContainerClient to get the blob by name, ensuring the blob exists and it's correctly isntantiated.
+                var blobServiceClient = new BlobServiceClient(Environment.GetEnvironmentVariable("ContainerBlobStorage"));
+                var containerClient = blobServiceClient.GetBlobContainerClient("downloads");
+                var blobClient = containerClient.GetBlobClient(name); // get the blob by name
+                //Check if the blob exists
+                if (blobClient == null || !await blobClient.ExistsAsync())
+                {
+                    _logger.LogError("BlobClient is null or the blob does not exist.");
+                    return;
+                }
 
-            // Generate SAS Token for secure download URL
-            var sasToken = GenerateSasToken(blob);
-            var downloadUrl = $"{blob.Uri}?{sasToken}";
+                _logger.LogInformation($"New blob detected \n Name: {name} \n");
 
-    
+                // Generate SAS Token for secure download URL
+                string sasToken = GenerateSasToken(blob);
+                var downloadUrl = $"{blob.Uri}?{sasToken}";
 
-            //TODO: Add processing logic here
-            // Notify Blazor Server app via HTTP POST
-            //await NotifyBlazorServerAppMicroservice(downloadUrl, fileName, _logger);
+                _logger.LogInformation($"downloadUrl: {downloadUrl}");
 
-            // Send email notification to the logged-in user
+                //TODO: Add processing logic here
+                // Notify Blazor Server app via HTTP POST
+                //await NotifyBlazorServerAppMicroservice(downloadUrl, fileName, _logger);
 
-            //using helper method
-            //await SendEmailNotification(downloadUrl, name, _logger);
+                // Send email notification to the logged-in user
 
-            //using SendGridEmailService
-            await _emailNotificationService.SendEmailNotificationAsync(downloadUrl, name); 
+                //using helper method
+                //await SendEmailNotification(downloadUrl, name, _logger);
 
+                //using SendGridEmailService
+                await _emailNotificationService.SendEmailNotificationAsync(downloadUrl, name);
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error processing blob: {ex.Message}");
+            }
+
+  
         }
 
         #region Helper Methods
 
         /// <summary>
-        /// GenerateSasToken method generates a Shared Access Signature (SAS) token for the blob
+        /// GenerateSasToken helper method generates a Shared Access Signature (SAS) token for the blob
         /// </summary>
-        /// <param name="cloudBlob"></param>
+        /// <param name="BlobClient"></param>
         /// <returns></returns>
-        private static string GenerateSasToken(CloudBlockBlob cloudBlob)
+        private static string GenerateSasToken(BlobClient blob)
         {
-            
-            var sasConstraints = new SharedAccessBlobPolicy
+            var sasBuilder = new BlobSasBuilder
             {
-                // SAS token expires in 1 hour
-                SharedAccessExpiryTime = DateTime.UtcNow.AddHours(1),
-                // SAS token grants read permission, allowing the user to download the file
-                Permissions = SharedAccessBlobPermissions.Read
+                BlobContainerName = blob.BlobContainerName,
+                BlobName = blob.Name,
+                Resource = "b",
+                StartsOn = DateTimeOffset.UtcNow,
+                ExpiresOn = DateTimeOffset.UtcNow.AddHours(1) // Token expires in 1 hour, after which the user will need to request a new token.
             };
 
-            var sasToken = cloudBlob.GetSharedAccessSignature(sasConstraints);
+            sasBuilder.SetPermissions(BlobSasPermissions.Read);
+
+            var sasToken = blob.GenerateSasUri(sasBuilder).Query;
             return sasToken;
+
+            //return sasBuilder.ToSasQueryParameters(new StorageSharedKeyCredential(Environment.GetEnvironmentVariable("AzureWebJobsStorageAccountName"), Environment.GetEnvironmentVariable("AzureWebJobsStorageAccountKey"))).ToString();
+
+            //Second Implementation as Alternative.
+
+            //var sasBuilder = new BlobSasBuilder
+            //{
+            //    BlobContainerName = blobClient.BlobContainerName,
+            //    BlobName = blobClient.Name,
+            //    ExpiresOn = DateTimeOffset.UtcNow.AddHours(1)
+            //};
+            //sasBuilder.SetPermissions(BlobSasPermissions.Read);
+
+            //var sasToken = blobClient.GenerateSasUri(sasBuilder).Query;
+            //return sasToken;
+
         }
 
         /// <summary>
