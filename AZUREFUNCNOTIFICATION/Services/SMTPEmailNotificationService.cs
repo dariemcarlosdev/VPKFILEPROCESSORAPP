@@ -1,16 +1,12 @@
 ﻿using AZUREFUNCNOTIFICATION;
 using Microsoft.Extensions.Logging;
 using MimeKit;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MailKit.Net.Smtp;
 
 /*
  Package needed: MailKit
  Description: This class implements the IEmailNotificationService interface to send email notifications using SMTP. It initializes the SMTP client with the SMTP server details and sender credentials, and sends an email with the download URL and file name to the recipient email address. The email can contain plain text or HTML content for better readability. The class also logs any errors that occur during the sending process for troubleshooting.
- Please note that the code provided in this file is for demonstration purposes only.Alternative Approaches Without Azure AD Access Using SMTP (with Office 365 / Outlook) 
+ Please note that the code provided in this file is for demonstration purposes only.Alternative Approaches Without Azure AD Access Using SMTP (with Office 365 / Outlook), for using Azure AD access, please refer to the official documentation.
  
  Explination:
 
@@ -68,16 +64,19 @@ namespace AZFUNCBLOBTRIGGERNOTIFICATION.Services
                 message.Body = builder.ToMessageBody();
 
                 //connect to the SMTP server and send the email
-                using (var client = new MailKit.Net.Smtp.SmtpClient())
+                using (var client = new SmtpClient())
                 {
-                    client.Connect(_smtpServer, _smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
-                    client.Authenticate(_senderEmail, _senderPassword);
-                    client.Send(message);
-                    client.Disconnect(true);
+                    //connect to the SMTP server
+                    await client.ConnectAsync(_smtpServer, _smtpPort, MailKit.Security.SecureSocketOptions.StartTls);
+                    //authenticate with the sender's email and password
+                    await client.AuthenticateAsync(_senderEmail, _senderPassword);
+                    //send the email
+                    await client.SendAsync(message);
+                    //disconnect from the SMTP server
+                    await client.DisconnectAsync(true);
                 }
 
                 _logger.LogInformation($"Email notification sent to {_recipientEmail} for file {fileName}");
-               
 
             }
             catch (Exception)
