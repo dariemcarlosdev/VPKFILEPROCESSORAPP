@@ -12,7 +12,7 @@ var host = new HostBuilder()
         services.AddApplicationInsightsTelemetryWorkerService();
         services.ConfigureFunctionsApplicationInsights();
         //Add the SendGridEmailService to the DI container.
-        services.AddScoped<IEmailNotificationService, SendGridEmailNotificationService>();
+        services.AddScoped<IEmailNotificationService, SMTPEmailNotificationService>();
     })
     .Build();
 
