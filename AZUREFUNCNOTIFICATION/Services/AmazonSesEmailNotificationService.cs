@@ -3,14 +3,38 @@ using Amazon.SimpleEmailV2;
 using Amazon.SimpleEmailV2.Model;
 using AZUREFUNCNOTIFICATION;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace AZFUNCBLOBTRIGGERNOTIFICATION.Services
 {
     /*
-     Package needed: AWSSDK.SimpleEmail
+    Package needed: AWSSDK.SimpleEmail
 
     Description: This class implements the IEmailNotificationService interface to send email notifications using Amazon Simple Email Service (SES). It initializes the SES client with AWS access keys and region, and sends an email with the download URL and file name to the recipient email address. The email can contain both plain text and HTML versions for better readability. The class also logs any errors that occur during the sending process for troubleshooting.
     
+    Setup for Amazon SES:
+    
+    1. Create an Amazon SES Account:
+    Go to the Amazon SES console.
+    Verify your email address (or domain) as a sender in SES if you're in the sandbox mode, which is the default mode for new SES accounts.
+    
+    2. Generate AWS Credentials:
+    Go to AWS IAM Console.
+    Create an IAM user with AmazonSESFullAccess permissions to send emails.
+    Generate access keys (Access Key ID and Secret Access Key) for this IAM user. These will be used to authenticate and authorize your application to send emails via SES.
+    
+    3. Install AWS SDK:
+    In your .NET project, install the AWS SDK for .NET to integrate with SES.
+
+    4. Set Up Environment Variables
+    Configure environment variables in your Azure Function or local development environment:
+
+    AWSAccessKeyId: Your AWS IAM Access Key ID.
+    AWSSecretAccessKey: Your AWS IAM Secret Access Key.
+    AWSRegion: The AWS region for SES (e.g., us-east-1).
+    SenderEmail: The verified sender email address in SES.
+    RecipientEmail: The email address of the recipient.
+
     Explanation:
     SES Client Initialization: We use AWS access keys and region to initialize the SES client, which communicates with the SES API.
     Email Composition: SendEmailRequest allows us to define email properties like the sender, recipient, subject, and body (both HTML and plain text versions).
@@ -45,7 +69,7 @@ namespace AZFUNCBLOBTRIGGERNOTIFICATION.Services
             _recipientEmail = Environment.GetEnvironmentVariable("RecipientEmail");
             _logger = logger;
 
-            // Initialize Amazon SES client with credentials
+            // Initialize Amazon SES client with credentials. I use AWS access keys and region to initialize the SES client, which communicates with the SES API.
             var awsCredentials = new Amazon.Runtime.BasicAWSCredentials(_awsAccessKeyId, _awsSecretAccessKey);
             _sesClient = new AmazonSimpleEmailServiceV2Client(awsCredentials, RegionEndpoint.GetBySystemName(_region));
         }
@@ -58,7 +82,7 @@ namespace AZFUNCBLOBTRIGGERNOTIFICATION.Services
                 var plainTextBody = $"Your file '{fileName}' is ready for download at {downloadUrl}.";
                 var htmlBody = $"<p>Your file <strong>{fileName}</strong> is ready for download at <a href='{downloadUrl}'>{downloadUrl}</a>.</p>";
 
-                // Create the email content request
+                //create email content
                 var emailContent = new EmailContent
                 {
                     Simple = new Message
@@ -72,7 +96,7 @@ namespace AZFUNCBLOBTRIGGERNOTIFICATION.Services
                     }
                 };
 
-                // Create the send email request with sender, recipient, and content
+                // Email Composition:Create the send email request with sender, recipient, and content.SendEmailRequest allows us to define email properties like the sender, recipient, subject, and body (both HTML and plain text versions).
                 var sendRequest = new SendEmailRequest
                 {
                     FromEmailAddress = _senderEmail,
@@ -83,15 +107,24 @@ namespace AZFUNCBLOBTRIGGERNOTIFICATION.Services
                     Content = emailContent
                 };
 
-
-
                 // Send email
                 var response = await _sesClient.SendEmailAsync(sendRequest);
+
+                //create object for _logger.LogInformation with senderRequest and response
+                var logObject = new
+                {
+                    SenderRequest = sendRequest,
+                    Response = response
+                };
+
 
                 //log the email notification
                 if (response.HttpStatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    _logger.LogInformation($"Email sent successfully to {_recipientEmail}");
+
+                    //log the sender request content to check the email content sent to the recipient
+                    _logger.LogInformation($" The email content sent to {_recipientEmail} is {JsonConvert.SerializeObject(logObject)}\n");
+                    _logger.LogInformation($"Email sent successfully to {_recipientEmail} with status {response.HttpStatusCode}\b");
 
                 }
                 else
@@ -100,11 +133,28 @@ namespace AZFUNCBLOBTRIGGERNOTIFICATION.Services
 
                 }
 
-                _logger.LogInformation($"Email notification sent to {_recipientEmail} for file {fileName}");
+                _logger.LogInformation($"\b Email notification sent to {_recipientEmail} for file {fileName}");
             }
+
+            catch (AmazonSimpleEmailServiceV2Exception ex)
+            {
+                // Log AWS SES-specific errors
+                _logger.LogError($"Amazon SES Error: {ex.Message}");
+                _logger.LogError($"HTTP Status Code: {ex.StatusCode}");
+                _logger.LogError($"Error Code: {ex.ErrorCode}");
+                _logger.LogError($"Request ID: {ex.RequestId}");
+            }
+
             catch (Exception ex)
             {
-                _logger.LogError($"Error sending email via Amazon SES: {ex.Message}");
+                //create object for _logger.LogError
+                var logObject = new
+                {
+                    FileName = $"Failed to send email notification for file {fileName}",
+                    ErrorMessage = ex.Message
+                };
+                _logger.LogError(JsonConvert.SerializeObject(logObject));
+
             }
         }
     }
